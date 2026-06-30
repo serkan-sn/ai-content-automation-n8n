@@ -1,0 +1,130 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0a691a00-143f-4642-b3d2-71574004cd26",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [{\n    \"role\": \"user\",\n    \"content\": \"Notion AI Agents konusu için 2 içerik üret:\\n1) LinkedIn gönderisi (150 kelime, profesyonel)\\n2) TikTok scripti (60 saniye, enerjik)\\n\\nSadece JSON döndür:\\n{\\\"linkedin\\\": \\\"...\\\", \\\"tiktok\\\": \\\"...\\\"}\"\n  }]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "fe4fda1c-585b-4873-86fe-a89faa640da0",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/pages",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Authorization\": \"Bearer YOUR_NOTION_API_KEY\",\n  \"Notion-Version\": \"2022-06-28\",\n  \"content-type\": \"application/json\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"parent\": { \"page_id\": \"YOUR_NOTION_PAGE_ID\" },\n  \"properties\": {\n    \"title\": {\n      \"title\": [{ \"text\": { \"content\": \"AI İçerik - Yeni Gönderi\" } }]\n    }\n  },\n  \"children\": [\n    {\n      \"object\": \"block\",\n      \"type\": \"heading_2\",\n      \"heading_2\": {\n        \"rich_text\": [{ \"type\": \"text\", \"text\": { \"content\": \"LinkedIn\" } }]\n      }\n    },\n    {\n      \"object\": \"block\",\n      \"type\": \"paragraph\",\n      \"paragraph\": {\n        \"rich_text\": [{ \"type\": \"text\", \"text\": { \"content\": \"{{ $json.linkedin }}\" } }]\n      }\n    },\n    {\n      \"object\": \"block\",\n      \"type\": \"heading_2\",\n      \"heading_2\": {\n        \"rich_text\": [{ \"type\": \"text\", \"text\": { \"content\": \"TikTok\" } }]\n      }\n    },\n    {\n      \"object\": \"block\",\n      \"type\": \"paragraph\",\n      \"paragraph\": {\n        \"rich_text\": [{ \"type\": \"text\", \"text\": { \"content\": \"{{ $json.tiktok }}\" } }]\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        592,
+        0
+      ],
+      "id": "2b9f8f2e-c99f-43e9-81f6-8b01b15a37ad",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.item.json.choices[0].message.content;\nconst parsed = JSON.parse(raw);\n\nreturn {\n  linkedin: parsed.linkedin,\n  tiktok: parsed.tiktok\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "id": "307bb821-dca0-4cc2-b824-17912c3471ef",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "654354a9-851c-4993-bffa-363ec11e1052",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dcc3800a320935d8debf5b4bb3e80c46a08f1c2c415a967c3d8940a2cd221ef5"
+  },
+  "nodeGroups": [],
+  "id": "TWYpj5ShzbGv7P1c",
+  "tags": []
+}
